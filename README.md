@@ -1,6 +1,28 @@
-# Financial Document Management API with RAG
+# Financial RAG - Document Management API
 
-A FastAPI application for managing financial documents with AI-powered semantic search using LangChain, Qdrant, and HuggingFace embeddings.
+![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square)
+![FastAPI](https://img.shields.io/badge/FastAPI-Latest-green?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square)
+
+A production-ready **FastAPI application** for managing financial documents with AI-powered semantic search using **LangChain**, **Qdrant**, and **HuggingFace embeddings**. Features role-based access control (RBAC), JWT authentication, and advanced document retrieval.
+
+**GitHub Repository:** https://github.com/Bhavinpatel16/financial-rag
+
+---
+
+## Features
+
+✨ **Core Features:**
+- 📄 **PDF Document Upload & Management** — Upload, store, and organize financial documents
+- 🔍 **AI-Powered Semantic Search** — Find relevant documents using natural language queries
+- 🤖 **RAG Pipeline** — Retrieval-Augmented Generation with LangChain and Qdrant
+- 🔐 **JWT Authentication** — Secure token-based authentication
+- 👥 **Role-Based Access Control (RBAC)** — Admin, Analyst, Auditor, Client roles
+- ⚡ **Vector Database** — Qdrant for fast semantic similarity search
+- 📊 **Document Embeddings** — Local HuggingFace embeddings (no API keys required)
+- 🏗️ **RESTful API** — Fully documented with Swagger UI & ReDoc
+- 🐳 **Docker Support** — Easy deployment with Docker Compose
 
 ---
 
@@ -36,6 +58,93 @@ financial_rag/
 ├── requirements.txt
 └── .env.example
 ```
+
+---
+
+## Quick Start (30 seconds)
+
+```bash
+# 1. Clone repo
+git clone https://github.com/Bhavinpatel16/financial-rag.git
+cd financial-rag
+
+# 2. Setup virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Start databases
+docker-compose up -d
+
+# 5. Configure & seed database
+cp .env.example .env
+python -m app.db.seed
+
+# 6. Run the app
+uvicorn app.main:app --reload --port 8000
+
+# 7. Open browser
+# API Docs: http://localhost:8000/docs
+# ReDoc: http://localhost:8000/redoc
+```
+
+Default login credentials:
+- **Username:** `admin`
+- **Password:** `Admin@1234`
+
+---
+
+## Project Structure
+
+```
+financial_rag/
+├── app/
+│   ├── api/routes/
+│   │   ├── auth.py          # /auth/register, /auth/login
+│   │   ├── documents.py     # /documents CRUD
+│   │   ├── roles.py         # /roles, /users/assign-role
+│   │   └── rag.py           # /rag/index, /rag/search, /rag/context
+│   ├── core/
+│   │   ├── config.py        # Settings from .env
+│   │   └── security.py      # JWT + RBAC helpers
+│   ├── db/
+│   │   ├── database.py      # SQLAlchemy engine + session
+│   │   └── seed.py          # Seed default roles & admin user
+│   ├── models/
+│   │   ├── user.py          # User, Role, Permission ORM models
+│   │   └── document.py      # Document ORM model
+│   ├── schemas/
+│   │   ├── user.py          # Pydantic schemas for auth/users/roles
+│   │   └── document.py      # Pydantic schemas for docs + RAG
+│   ├── services/
+│   │   ├── file_service.py  # PDF upload + text extraction
+│   │   └── rag_service.py   # Chunking, embeddings, Qdrant, reranking
+│   └── main.py              # FastAPI app entry point
+├── tests/
+│   └── test_api.py
+├── docker-compose.yml       # PostgreSQL + Qdrant
+├── requirements.txt
+└── .env.example
+```
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| **Backend Framework** | FastAPI |
+| **Authentication** | JWT + RBAC |
+| **Database** | PostgreSQL |
+| **Vector DB** | Qdrant |
+| **Embeddings** | HuggingFace (sentence-transformers) |
+| **RAG Framework** | LangChain |
+| **ORM** | SQLAlchemy |
+| **PDF Processing** | PyPDF |
+| **API Docs** | Swagger UI + ReDoc |
+| **Containerization** | Docker & Docker Compose |
 
 ---
 
@@ -294,3 +403,125 @@ pytest tests/ -v
 - [ ] Set `allow_origins` in CORS to your actual frontend domain
 - [ ] Use a managed PostgreSQL (e.g., AWS RDS)
 - [ ] Use managed Qdrant Cloud instead of local Docker
+
+---
+
+## Environment Variables
+
+Key environment variables in `.env`:
+
+```env
+# Database
+DATABASE_URL=postgresql://postgres:password@localhost:5432/financial_rag
+
+# Security
+SECRET_KEY=your-super-secret-key-change-this-in-production-min-32-chars
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+# Embeddings (Local)
+USE_LOCAL_EMBEDDINGS=true
+EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+
+# Vector DB
+QDRANT_URL=http://localhost:6333
+QDRANT_COLLECTION_NAME=financial_documents
+
+# CORS
+CORS_ORIGINS=["http://localhost:3000","http://localhost:8000"]
+```
+
+---
+
+## API Endpoints
+
+### Authentication
+- `POST /auth/register` — Register new user
+- `POST /auth/login` — Login and get JWT token
+
+### Documents
+- `GET /documents/` — List all documents
+- `POST /documents/upload` — Upload PDF document
+- `GET /documents/{id}` — Get document details
+- `PUT /documents/{id}` — Update document
+- `DELETE /documents/{id}` — Delete document
+
+### RAG Search
+- `POST /rag/index-document/{id}` — Index document for semantic search
+- `POST /rag/search` — Semantic search across indexed documents
+- `GET /rag/context/{id}` — Get document context/summary
+
+### User & Roles (Admin only)
+- `GET /roles/` — List all roles
+- `POST /users/assign-role` — Assign role to user
+- `GET /users/` — List all users
+
+Full API documentation available at `/docs` (Swagger UI) or `/redoc` (ReDoc) after running the server.
+
+---
+
+## Performance Tips
+
+1. **First Search is Slow** — HuggingFace embeddings download (~90MB) on first use. Subsequent searches are fast.
+2. **Batch Indexing** — Index multiple documents in parallel for better performance.
+3. **Vector DB Optimization** — Increase `vector_size` in Qdrant config for better accuracy (trade-off with speed).
+4. **Database Indexing** — PostgreSQL automatically indexes common queries.
+
+---
+
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### Development Setup
+
+```bash
+git clone https://github.com/Bhavinpatel16/financial-rag.git
+cd financial-rag
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+docker-compose up -d
+python -m app.db.seed
+uvicorn app.main:app --reload
+```
+
+---
+
+## Support & Issues
+
+Found a bug? Have a feature request?
+
+- **GitHub Issues:** https://github.com/Bhavinpatel16/financial-rag/issues
+- **Discussions:** https://github.com/Bhavinpatel16/financial-rag/discussions
+
+---
+
+## License
+
+This project is licensed under the **MIT License** — see [LICENSE](LICENSE) file for details.
+
+---
+
+## Authors
+
+- **Bhavin Patel** — Initial development
+
+---
+
+## Acknowledgments
+
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework
+- [LangChain](https://www.langchain.com/) - LLM orchestration
+- [Qdrant](https://qdrant.tech/) - Vector database
+- [HuggingFace](https://huggingface.co/) - Open-source ML models
+
+---
+
+**Happy coding! 🚀**
