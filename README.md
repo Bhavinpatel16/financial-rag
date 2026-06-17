@@ -50,6 +50,8 @@ financial_rag/
 │   ├── services/
 │   │   ├── file_service.py  # PDF upload + text extraction
 │   │   └── rag_service.py   # Chunking, embeddings, Qdrant, reranking
+│   ├── static/
+│   │   └── index.html       # Web UI - Document Manager Dashboard
 │   └── main.py              # FastAPI app entry point
 ├── tests/
 │   └── test_api.py
