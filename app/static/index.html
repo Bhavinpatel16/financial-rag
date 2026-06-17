@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FinDoc — Financial Document Manager</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      color: #1a2332;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 220px;
+      background: #1a2332;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+    }
+
+    .sidebar-brand {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid #2d3f55;
+      font-size: 20px;
+      font-weight: 700;
+      color: #4db8ff;
+      letter-spacing: -0.5px;
+    }
+    .sidebar-brand span { color: #fff; }
+
+    .nav { flex: 1; padding: 16px 0; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #8ba3bf;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .nav-item:hover { background: #243446; color: #fff; }
+    .nav-item.active { background: #243446; color: #4db8ff; border-left-color: #4db8ff; }
+    .nav-item .icon { font-size: 16px; }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #2d3f55;
+      font-size: 12px;
+      color: #4a6680;
+    }
+    #user-info { font-size: 13px; color: #8ba3bf; margin-bottom: 8px; }
+
+    /* ── Main ── */
+    .main { margin-left: 220px; flex: 1; padding: 32px; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: #1a2332;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+
+    .card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1a2332;
+    }
+
+    /* ── Stats row ── */
+    .stats { display: flex; gap: 16px; margin-bottom: 20px; }
+    .stat-card {
+      flex: 1;
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .stat-num { font-size: 32px; font-weight: 700; color: #4db8ff; }
+    .stat-label { font-size: 13px; color: #6b8299; margin-top: 4px; }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #3d5166; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d1dce8;
+      border-radius: 7px;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.15s;
+      background: #f8fafc;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #4db8ff; background: #fff; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 9px 20px;
+      border: none;
+      border-radius: 7px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #4db8ff; color: #fff; }
+    .btn-danger { background: #e05555; color: #fff; }
+    .btn-success { background: #3dbe7a; color: #fff; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 10px 12px; background: #f0f4f8; color: #3d5166; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 11px 12px; border-bottom: 1px solid #edf1f6; color: #2a3d52; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-blue { background: #ddf0ff; color: #0077cc; }
+    .badge-green { background: #d4f5e5; color: #1a8a4a; }
+    .badge-orange { background: #fff0d4; color: #a05a00; }
+    .badge-gray { background: #edf1f6; color: #5a7a99; }
+
+    /* ── Alert ── */
+    .alert {
+      padding: 10px 16px;
+      border-radius: 7px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      display: none;
+    }
+    .alert-success { background: #d4f5e5; color: #1a5c35; }
+    .alert-error { background: #fde8e8; color: #8b1a1a; }
+    .alert.show { display: block; }
+
+    /* ── Search results ── */
+    .result-item {
+      border: 1px solid #e2eaf2;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      background: #f8fafc;
+    }
+    .result-item .result-title { font-weight: 600; font-size: 14px; color: #1a2332; margin-bottom: 4px; }
+    .result-item .result-meta { font-size: 12px; color: #6b8299; margin-bottom: 8px; }
+    .result-item .result-text { font-size: 13px; color: #3d5166; line-height: 1.5; }
+    .result-score { float: right; font-size: 12px; font-weight: 700; color: #4db8ff; }
+
+    /* ── Login page ── */
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f4f8;
+    }
+    .login-box {
+      background: #fff;
+      border-radius: 14px;
+      padding: 40px 36px;
+      width: 360px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    }
+    .login-logo {
+      font-size: 26px;
+      font-weight: 800;
+      color: #4db8ff;
+      margin-bottom: 6px;
+    }
+    .login-logo span { color: #1a2332; }
+    .login-sub { font-size: 13px; color: #6b8299; margin-bottom: 28px; }
+
+    .tab-btns { display: flex; gap: 8px; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 8px; border: 1px solid #d1dce8; background: #f8fafc; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; color: #6b8299; }
+    .tab-btn.active { background: #4db8ff; color: #fff; border-color: #4db8ff; }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: #8ba3bf; font-size: 14px; }
+    .empty-state .empty-icon { font-size: 40px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ LOGIN PAGE ══════════════════ -->
+<div id="login-page" class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">Fin<span>Doc</span></div>
+    <div class="login-sub">Financial Document Management</div>
+
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+      <button class="tab-btn" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-form">
+      <div id="login-alert" class="alert"></div>
+      <div class="form-group">
+        <label>Username</label>
+        <input id="login-username" type="text" placeholder="Enter username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="login-password" type="password" placeholder="Enter password" />
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="doLogin()">Login</button>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form" style="display:none">
+      <div id="reg-alert" class="alert"></div>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input id="reg-name" type="text" placeholder="Your full name" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input id="reg-email" type="email" placeholder="email@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Username</label>
+        <input id="reg-username" type="text" placeholder="Choose a username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="reg-password" type="password" placeholder="Choose a password" />
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MAIN APP ══════════════════ -->
+<div id="app" style="display:none">
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-brand">Fin<span>Doc</span></div>
+      <nav class="nav">
+        <div class="nav-item active" onclick="showPage('dashboard')"><span class="icon">📊</span> Dashboard</div>
+        <div class="nav-item" onclick="showPage('documents')"><span class="icon">📄</span> Documents</div>
+        <div class="nav-item" onclick="showPage('upload')"><span class="icon">⬆️</span> Upload</div>
+        <div class="nav-item" onclick="showPage('search')"><span class="icon">🔍</span> Semantic Search</div>
+        <div class="nav-item" onclick="showPage('roles')"><span class="icon">👥</span> Roles</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="user-info">Logged in as —</div>
+        <button class="btn btn-danger btn-sm" onclick="doLogout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+
+      <!-- Dashboard -->
+      <div id="page-dashboard" class="page active">
+        <div class="page-title">Dashboard</div>
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-num" id="stat-docs">0</div>
+            <div class="stat-label">Total Documents</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="stat-indexed">0</div>
+            <div class="stat-label">Indexed for Search</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="stat-roles">4</div>
+            <div class="stat-label">User Roles</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Recent Documents</h3>
+          <div id="dash-docs">
+            <div class="empty-state"><div class="empty-icon">📂</div>No documents yet. Upload one to get started.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documents -->
+      <div id="page-documents" class="page">
+        <div class="page-title">All Documents</div>
+        <div class="card">
+          <div style="display:flex;gap:10px;margin-bottom:16px">
+            <input id="filter-title" placeholder="Filter by title..." style="max-width:200px" oninput="filterDocs()" />
+            <input id="filter-company" placeholder="Filter by company..." style="max-width:200px" oninput="filterDocs()" />
+            <select id="filter-type" style="max-width:160px" onchange="filterDocs()">
+              <option value="">All Types</option>
+              <option value="invoice">Invoice</option>
+              <option value="report">Report</option>
+              <option value="contract">Contract</option>
+              <option value="agreement">Agreement</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div id="docs-table-wrap">
+            <div class="empty-state"><div class="empty-icon">📄</div>No documents found.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload -->
+      <div id="page-upload" class="page">
+        <div class="page-title">Upload Document</div>
+        <div class="card" style="max-width:520px">
+          <h3>Upload a Financial PDF</h3>
+          <div id="upload-alert" class="alert"></div>
+          <div class="form-group">
+            <label>Document Title</label>
+            <input id="up-title" placeholder="e.g. Q4 Financial Report 2024" />
+          </div>
+          <div class="form-group">
+            <label>Company Name</label>
+            <input id="up-company" placeholder="e.g. Acme Corp" />
+          </div>
+          <div class="form-group">
+            <label>Document Type</label>
+            <select id="up-type">
+              <option value="report">Report</option>
+              <option value="invoice">Invoice</option>
+              <option value="contract">Contract</option>
+              <option value="agreement">Agreement</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>PDF File</label>
+            <input id="up-file" type="file" accept=".pdf" />
+          </div>
+          <button class="btn btn-primary" onclick="doUpload()">Upload Document</button>
+        </div>
+      </div>
+
+      <!-- Semantic Search -->
+      <div id="page-search" class="page">
+        <div class="page-title">Semantic Search</div>
+        <div class="card">
+          <h3>Search Financial Documents with AI</h3>
+          <div style="display:flex;gap:10px;margin-bottom:16px">
+            <input id="search-query" placeholder='e.g. "financial risk related to high debt ratio"' style="flex:1" />
+            <select id="search-topk" style="width:120px">
+              <option value="3">Top 3</option>
+              <option value="5" selected>Top 5</option>
+              <option value="10">Top 10</option>
+            </select>
+            <button class="btn btn-primary" onclick="doSearch()">Search</button>
+          </div>
+          <div id="search-alert" class="alert"></div>
+          <div id="search-results">
+            <div class="empty-state"><div class="empty-icon">🔍</div>Enter a query to search indexed documents.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Roles -->
+      <div id="page-roles" class="page">
+        <div class="page-title">Roles & Permissions</div>
+        <div class="card">
+          <h3>System Roles</h3>
+          <div id="roles-table-wrap">
+            <div class="empty-state"><div class="empty-icon">👥</div>Loading roles...</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div>
+</div>
+
+<script>
+  const API = 'http://localhost:8000';
+  let token = localStorage.getItem('findoc_token') || '';
+  let currentUser = localStorage.getItem('findoc_user') || '';
+  let allDocs = [];
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  window.onload = () => {
+    if (token) showApp();
+  };
+
+  function showApp() {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('user-info').textContent = `Logged in as ${currentUser}`;
+    loadDashboard();
+    loadDocuments();
+    loadRoles();
+  }
+
+  function doLogout() {
+    token = ''; currentUser = '';
+    localStorage.removeItem('findoc_token');
+    localStorage.removeItem('findoc_user');
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+
+  // ── Tab switch ────────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+    });
+  }
+
+  // ── Page nav ──────────────────────────────────────────────────────────────
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  async function doLogin() {
+    const u = document.getElementById('login-username').value.trim();
+    const p = document.getElementById('login-password').value;
+    if (!u || !p) return showAlert('login-alert', 'error', 'Please enter username and password.');
+
+    const form = new URLSearchParams();
+    form.append('username', u); form.append('password', p);
+
+    try {
+      const res = await fetch(`${API}/auth/login`, { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) return showAlert('login-alert', 'error', data.detail || 'Login failed.');
+      token = data.access_token;
+      currentUser = u;
+      localStorage.setItem('findoc_token', token);
+      localStorage.setItem('findoc_user', u);
+      showApp();
+    } catch (e) {
+      showAlert('login-alert', 'error', 'Cannot connect to server. Is it running?');
+    }
+  }
+
+  async function doRegister() {
+    const payload = {
+      full_name: document.getElementById('reg-name').value,
+      email: document.getElementById('reg-email').value,
+      username: document.getElementById('reg-username').value,
+      password: document.getElementById('reg-password').value,
+    };
+    if (!payload.email || !payload.username || !payload.password)
+      return showAlert('reg-alert', 'error', 'Please fill all required fields.');
+
+    try {
+      const res = await fetch(`${API}/auth/register`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) return showAlert('reg-alert', 'error', data.detail || 'Registration failed.');
+      showAlert('reg-alert', 'success', 'Account created! Please login.');
+      setTimeout(() => switchTab('login'), 1500);
+    } catch (e) {
+      showAlert('reg-alert', 'error', 'Cannot connect to server.');
+    }
+  }
+
+  // ── Documents ─────────────────────────────────────────────────────────────
+  async function loadDocuments() {
+    try {
+      const res = await fetch(`${API}/documents`, { headers: authHeader() });
+      allDocs = await res.json();
+      renderDocsTable(allDocs);
+      updateDashboardStats(allDocs);
+      renderDashDocs(allDocs.slice(0, 5));
+    } catch (e) {}
+  }
+
+  function renderDocsTable(docs) {
+    const wrap = document.getElementById('docs-table-wrap');
+    if (!docs.length) {
+      wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div>No documents found.</div>`;
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr>
+        <th>Title</th><th>Company</th><th>Type</th><th>Indexed</th><th>Uploaded</th><th>Actions</th>
+      </tr></thead>
+      <tbody>${docs.map(d => `
+        <tr>
+          <td><strong>${d.title}</strong></td>
+          <td>${d.company_name}</td>
+          <td><span class="badge badge-blue">${d.document_type}</span></td>
+          <td>${d.is_indexed === 'true'
+            ? '<span class="badge badge-green">✓ Indexed</span>'
+            : '<span class="badge badge-gray">Not indexed</span>'}</td>
+          <td>${new Date(d.created_at).toLocaleDateString()}</td>
+          <td style="display:flex;gap:6px">
+            ${d.is_indexed !== 'true'
+              ? `<button class="btn btn-success btn-sm" onclick="indexDoc(${d.id})">Index</button>`
+              : `<button class="btn btn-primary btn-sm" onclick="viewContext(${d.id})">Context</button>`}
+            <button class="btn btn-danger btn-sm" onclick="deleteDoc(${d.id})">Delete</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  function filterDocs() {
+    const title = document.getElementById('filter-title').value.toLowerCase();
+    const company = document.getElementById('filter-company').value.toLowerCase();
+    const type = document.getElementById('filter-type').value;
+    const filtered = allDocs.filter(d =>
+      d.title.toLowerCase().includes(title) &&
+      d.company_name.toLowerCase().includes(company) &&
+      (type === '' || d.document_type === type)
+    );
+    renderDocsTable(filtered);
+  }
+
+  async function deleteDoc(id) {
+    if (!confirm('Delete this document?')) return;
+    await fetch(`${API}/documents/${id}`, { method: 'DELETE', headers: authHeader() });
+    loadDocuments();
+  }
+
+  async function indexDoc(id) {
+    const res = await fetch(`${API}/rag/index-document/${id}`, { method: 'POST', headers: authHeader() });
+    const data = await res.json();
+    if (res.ok) alert(`✅ Indexed! ${data.chunks_stored} chunks stored.`);
+    else alert('❌ ' + (data.detail || 'Indexing failed'));
+    loadDocuments();
+  }
+
+  async function viewContext(id) {
+    const res = await fetch(`${API}/rag/context/${id}`, { headers: authHeader() });
+    const data = await res.json();
+    if (!res.ok) return alert('Error: ' + data.detail);
+    alert(`Document: ${data.title}\nChunks: ${data.total_chunks}\n\nFirst chunk:\n${data.chunks[0] || 'N/A'}`);
+  }
+
+  // ── Upload ────────────────────────────────────────────────────────────────
+  async function doUpload() {
+    const title = document.getElementById('up-title').value.trim();
+    const company = document.getElementById('up-company').value.trim();
+    const type = document.getElementById('up-type').value;
+    const file = document.getElementById('up-file').files[0];
+
+    if (!title || !company || !file)
+      return showAlert('upload-alert', 'error', 'Please fill all fields and select a PDF.');
+
+    const form = new FormData();
+    form.append('title', title);
+    form.append('company_name', company);
+    form.append('document_type', type);
+    form.append('file', file);
+
+    try {
+      showAlert('upload-alert', 'success', 'Uploading...');
+      const res = await fetch(`${API}/documents/upload`, {
+        method: 'POST', headers: authHeader(), body: form
+      });
+      const data = await res.json();
+      if (!res.ok) return showAlert('upload-alert', 'error', data.detail || 'Upload failed.');
+      showAlert('upload-alert', 'success', `✅ Document uploaded! ID: ${data.id}`);
+      document.getElementById('up-title').value = '';
+      document.getElementById('up-company').value = '';
+      document.getElementById('up-file').value = '';
+      loadDocuments();
+    } catch (e) {
+      showAlert('upload-alert', 'error', 'Upload failed. Check server.');
+    }
+  }
+
+  // ── Semantic Search ───────────────────────────────────────────────────────
+  async function doSearch() {
+    const query = document.getElementById('search-query').value.trim();
+    const topk = parseInt(document.getElementById('search-topk').value);
+    if (!query) return showAlert('search-alert', 'error', 'Please enter a search query.');
+
+    showAlert('search-alert', 'success', 'Searching...');
+    try {
+      const res = await fetch(`${API}/rag/search`, {
+        method: 'POST',
+        headers: { ...authHeader(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, top_k: topk })
+      });
+      const data = await res.json();
+      hideAlert('search-alert');
+
+      if (!res.ok) return showAlert('search-alert', 'error', data.detail || 'Search failed.');
+
+      const wrap = document.getElementById('search-results');
+      if (!data.results.length) {
+        wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div>No results found. Make sure documents are indexed.</div>`;
+        return;
+      }
+      wrap.innerHTML = data.results.map(r => `
+        <div class="result-item">
+          <div class="result-title">
+            ${r.document_title}
+            <span class="result-score">Score: ${r.score}</span>
+          </div>
+          <div class="result-meta">
+            <span class="badge badge-blue">${r.document_type}</span>
+            &nbsp; ${r.company_name}
+          </div>
+          <div class="result-text">${r.chunk_text.slice(0, 300)}${r.chunk_text.length > 300 ? '...' : ''}</div>
+        </div>`).join('');
+    } catch (e) {
+      showAlert('search-alert', 'error', 'Search failed. Check server.');
+    }
+  }
+
+  // ── Roles ─────────────────────────────────────────────────────────────────
+  async function loadRoles() {
+    try {
+      const res = await fetch(`${API}/roles`, { headers: authHeader() });
+      const roles = await res.json();
+      const wrap = document.getElementById('roles-table-wrap');
+      if (!roles.length) { wrap.innerHTML = '<div class="empty-state">No roles found.</div>'; return; }
+      wrap.innerHTML = `<table>
+        <thead><tr><th>Role</th><th>Description</th><th>Permissions</th></tr></thead>
+        <tbody>${roles.map(r => `
+          <tr>
+            <td><strong>${r.name}</strong></td>
+            <td>${r.description || '—'}</td>
+            <td>${r.permissions.map(p =>
+              `<span class="badge badge-blue" style="margin:2px">${p.name}</span>`
+            ).join(' ')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+    } catch (e) {}
+  }
+
+  // ── Dashboard ─────────────────────────────────────────────────────────────
+  function updateDashboardStats(docs) {
+    document.getElementById('stat-docs').textContent = docs.length;
+    document.getElementById('stat-indexed').textContent = docs.filter(d => d.is_indexed === 'true').length;
+  }
+
+  function renderDashDocs(docs) {
+    const el = document.getElementById('dash-docs');
+    if (!docs.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div>No documents yet.</div>`;
+      return;
+    }
+    el.innerHTML = `<table>
+      <thead><tr><th>Title</th><th>Company</th><th>Type</th><th>Status</th></tr></thead>
+      <tbody>${docs.map(d => `
+        <tr>
+          <td>${d.title}</td>
+          <td>${d.company_name}</td>
+          <td><span class="badge badge-blue">${d.document_type}</span></td>
+          <td>${d.is_indexed === 'true'
+            ? '<span class="badge badge-green">Indexed</span>'
+            : '<span class="badge badge-gray">Pending</span>'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  async function loadDashboard() {
+    // already loaded in loadDocuments
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function authHeader() {
+    return { 'Authorization': `Bearer ${token}` };
+  }
+
+  function showAlert(id, type, msg) {
+    const el = document.getElementById(id);
+    el.className = `alert alert-${type} show`;
+    el.textContent = msg;
+  }
+
+  function hideAlert(id) {
+    document.getElementById(id).classList.remove('show');
+  }
+</script>
+</body>
+</html>
